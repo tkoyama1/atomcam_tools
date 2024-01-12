@@ -1,5 +1,5 @@
-name: Create Dicker Image
-run-name: ${{ github.actor }} Create Dicker Image 🚀
+name: Create Docker Image
+run-name: ${{ github.actor }} Create Docker Image 🚀
 on: [push]
 jobs:
   push_to_registry:
