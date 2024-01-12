@@ -52,11 +52,11 @@ if [ $RES -eq 0 ] ; then
 
     [ -x /media/mmc/network_init.sh ] && /media/mmc/network_init.sh restart >> /media/mmc/healthcheck.log 2>&1
     [ "$?" = "100" ] && error=0
-    if ifconfig | grep wlan0 > /dev/null 2>&1 ; then
-      ifconfig wlan0 down
-      ifconfig wlan0 up
+    if ifconfig | grep eth0 > /dev/null 2>&1 ; then
+      ifconfig eth0 down
+      ifconfig eth0 up
       killall -USR1 udhcpc
-      ps | grep -v grep | grep udhcpc || udhcpc -i wlan0 -x hostname:ATOM -p /var/run/udhcpc.pid -b >> /media/mmc/healthcheck.log 2>&1
+      ps | grep -v grep | grep udhcpc || udhcpc -i eth0 -x hostname:ATOM -p /var/run/udhcpc.pid -b >> /media/mmc/healthcheck.log 2>&1
     fi
   fi
   echo $retry $error > /tmp/healthcheck.retry_count
