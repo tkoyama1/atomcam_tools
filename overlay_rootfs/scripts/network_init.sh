@@ -16,6 +16,31 @@ if [ -f /atom/system/driver/mmc_detect_test.ko ]; then
   done
   VENDERID=`cat /sys/bus/mmc/devices/mmc1\:0001/mmc1\:0001\:1/vendor`
 fi
+
+
+modprobe r8152
+modprobe ax88179_178a
+modprobe asix
+
+count=0
+while ! ip link | grep eth0 > /dev/null
+do
+  sleep 0.5
+  let count++
+  [ 20 -le $count ] && break
+done
+
+ifconfig eth0 up
+udhcpc -i eth0 -H ATOM -p /var/run/udhcpc.pid -b &
+
+count=0
+while ! ifconfig eth0 | grep 'inet addr' > /dev/null
+do
+  sleep 0.5
+  let count++
+  [ 20 -le $count ] && break
+done
+
 if [ "0x024c" = "$VENDERID" ]; then
   insmod /atom/system/driver/rtl8189ftv.ko rtw_power_mgnt=0 rtw_enusbss=0
 elif [ "0x007a" = "$VENDERID" ]; then
@@ -55,31 +80,7 @@ network={
 EOF
 fi
 
-modprobe r8152
-modprobe ax88179_178a
-modprobe asix
-
-count=0
-while ! ip link | grep eth0 > /dev/null
-while ! ip link | grep wlan0 > /dev/null
-do
-  sleep 0.5
-  let count++
-  [ 20 -le $count ] && break
-done
-
 HWADDR=$(awk -F "=" '/(CONFIG_INFO|NETRELATED_MAC)=/ { print substr($2,1,2) ":" substr($2,3,2) ":" substr($2,5,2) ":" substr($2,7,2) ":" substr($2,9,2) ":" substr($2,11,2); exit;}' /atom/configs/.product_config)
 ifconfig wlan0 hw ether $HWADDR up
 wpa_supplicant -f/tmp/log/wpa_supplicant.log -D nl80211 -i wlan0 -c /tmp/system/etc/wpa_supplicant.conf -B
-udhcpc -i wlan0 -x hostname:ATOM -p /var/run/udhcpc.pid -b &
-
-ifconfig eth0 up
-udhcpc -i eth0 -H ATOM -p /var/run/udhcpc.pid -b &
-
-count=0
-while ! ifconfig eth0 | grep 'inet addr' > /dev/null
-do
-  sleep 0.5
-  let count++
-  [ 20 -le $count ] && break
-done
+udhcpc -i wlan0 -x hostname:ATOM -p /var/run/udhcpc_wlan.pid -b &
