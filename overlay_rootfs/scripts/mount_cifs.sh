@@ -15,7 +15,7 @@ if [ "$STORAGE_CIFS" = "on" -o "$STORAGE_CIFS" = "alarm" -o "$STORAGE_CIFS" = "r
   # mount | grep "$STORAGE_CIFSSERVER" > /dev/null && exit
   umount -f /atom/mnt
   touch $LOCKFILE
-  for VER in 3.0 2.1 2.0
+  for VER in 2.0 2.1 3.0
   do
     if mount -t cifs -ousername=$STORAGE_CIFSUSER,password=$STORAGE_CIFSPASSWD,vers=$VER $STORAGE_CIFSSERVER /atom/mnt ; then
       rm -f $LOCKFILE
