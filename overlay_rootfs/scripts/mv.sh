@@ -8,6 +8,14 @@ if [ "${1%/*.mp4}" != "/media/mmc/tmp" ] || [ "${2##/media/mmc/record/*.mp4}" !=
   exit
 fi
 
+LOCKFILE=/tmp/mv.lock
+
+while [ -f $LOCKFILE ] ; do
+  sleep 0.5
+done
+
+touch $LOCKFILE
+
 HACK_INI=/tmp/hack.ini
 RECORDING_LOCAL_SCHEDULE=$(awk -F "=" '/RECORDING_LOCAL_SCHEDULE *=/ {print $2}' $HACK_INI)
 STORAGE_CIFS=$(awk -F "=" '/STORAGE_CIFS *=/ { gsub(/^\/*/, "", $2);print $2}' $HACK_INI)
@@ -73,7 +81,8 @@ if [ "$FMT" != "" ]; then
   TMPFILE="/media/mmc/tmp/mv_`cat /proc/sys/kernel/random/uuid`"
   /bin/busybox mv $1 $TMPFILE
   (
-    if [ "$STORAGE_CIFS" = "on" -o "$STORAGE_CIFS" = "record" ] && /tmp/system/bin/mount_cifs ; then
+    if [ "$STORAGE_CIFS" = "on" -o "$STORAGE_CIFS" = "record" ]; then
+      /tmp/system/bin/mount_cifs
       TIME=`echo $2 | sed -e 's|^/media/mmc/record/||' -e 's|/||g' -e 's|.mp4$||'`
       CIFSFILE=`date -d $TIME +"record/$STORAGE_CIFS_PATH.mp4"`
       OUTFILE="/atom/mnt/$HOSTNAME/$CIFSFILE"
@@ -94,8 +103,11 @@ if [ "$FMT" != "" ]; then
     if [ "$WEBHOOK" = "on" ] && [ "$WEBHOOK_URL" != "" ] && [ "$WEBHOOK_RECORD_EVENT" = "on" ]; then
       LD_LIBRARY_PATH=/tmp/system/lib:/usr/lib /tmp/system/lib/ld.so.1 /tmp/system/bin/curl -X POST -m 3 -H "Content-Type: application/json" -d "{\"type\":\"recordEvent\", \"device\":\"${HOSTNAME}\"${STORAGE}}" $WEBHOOK_URL > /dev/null 2>&1
     fi
+
+    rm -f $LOCKFILE
   ) &
 else
   /bin/busybox rm $1
+  rm -f $LOCKFILE
 fi
 exit 0
